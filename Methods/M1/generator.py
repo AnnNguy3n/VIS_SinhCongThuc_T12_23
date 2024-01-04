@@ -15,15 +15,15 @@ class Generator(BruteforceBase):
                  NUM_CYCLE,
                  MAX_CYCLE,
                  MIN_CYCLE,
-                 METHOD,
                  FIELDS,
-                 MODE,
                  NUM_CHILD_PROCESS,
                  FILTERS,
                  DIV_WGT_BY_MC,
                  TARGET,
-                 TMP_STRG_SIZE,
-                 PERIODIC_SAVE_TIME):
+                 MODE=0,
+                 TMP_STRG_SIZE=10000,
+                 PERIODIC_SAVE_TIME=1800):
+        METHOD = 1
         super().__init__(DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, METHOD, FIELDS, MODE, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, TMP_STRG_SIZE, PERIODIC_SAVE_TIME)
 
     def generate(self):
