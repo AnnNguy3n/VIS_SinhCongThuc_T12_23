@@ -365,3 +365,122 @@ def multi_investment_strictly(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTERE
         results.append(result)
 
     return results
+
+
+@nb.njit
+def multi_investment_skip_20p_lowprofit(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTEREST, NUM_CYCLE):
+    """
+    Output: Nguong_20, GeoNgn_20, HarNgn_20, ProNgn_20
+    """
+    size = INDEX.shape[0] - 1
+    Nguong_20 = np.zeros(NUM_CYCLE)
+    temp_nguong = -1.7976931348623157e+308
+    for i in range(size-1, NUM_CYCLE-1, -1):
+        start, end = INDEX[i], INDEX[i+1]
+        values = WEIGHT[start:end]
+        arrPro = PROFIT[start:end]
+        mask = np.argsort(arrPro)
+        n = int(np.ceil(float(len(mask)) / 5))
+        ngn = np.max(values[mask[:n]])
+        if ngn > temp_nguong:
+            temp_nguong = ngn
+
+    Nguong_20[0] = temp_nguong
+    for i in range(NUM_CYCLE-1, 0, -1):
+        start, end = INDEX[i], INDEX[i+1]
+        values = WEIGHT[start:end]
+        arrPro = PROFIT[start:end]
+        mask = np.argsort(arrPro)
+        n = int(np.ceil(float(len(mask)) / 5))
+        ngn = np.max(values[mask[:n]])
+        if ngn > temp_nguong:
+            temp_nguong = ngn
+
+        idx = NUM_CYCLE - i
+        Nguong_20[idx] = temp_nguong
+
+    GeoNgn_20 = np.zeros(NUM_CYCLE)
+    HarNgn_20 = np.zeros(NUM_CYCLE)
+    ProNgn_20 = np.zeros(NUM_CYCLE)
+    for i in range(NUM_CYCLE):
+        idx = NUM_CYCLE - 1 - i
+        v = Nguong_20[idx]
+        temp_profit = np.zeros(size-i)
+        bool_wgt = WEIGHT > v
+        for k in range(size-1, i-1, -1):
+            _idx_ = size - 1 - k
+            start, end = INDEX[k], INDEX[k+1]
+            mask_ = bool_wgt[start:end]
+            if np.count_nonzero(mask_) == 0:
+                temp_profit[_idx_] = INTEREST
+            else:
+                temp_profit[_idx_] = PROFIT[start:end][mask_].mean()
+
+        GeoNgn_20[idx] = geomean(temp_profit[:-1])
+        HarNgn_20[idx] = harmean(temp_profit[:-1])
+        ProNgn_20[idx] = temp_profit[-1]
+
+    results = []
+    for i in range(NUM_CYCLE):
+        result = [
+            Nguong_20[i],
+            GeoNgn_20[i],
+            HarNgn_20[i],
+            ProNgn_20[i]
+        ]
+        results.append(result)
+
+    return results
+
+
+@nb.njit
+def multi_investment_skip_negative_profit(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTEREST, NUM_CYCLE):
+    """
+    Output: Nguong_snp, GeoNgn_snp, HarNgn_snp, ProNgn_snp
+    """
+    size = INDEX.shape[0] - 1
+    Nguong_snp = np.zeros(NUM_CYCLE)
+    start = INDEX[NUM_CYCLE]
+    mask = PROFIT[start:] < 1.0
+    Nguong_snp[0] = np.max(WEIGHT[start:][mask])
+
+    for i in range(NUM_CYCLE-1, 0, -1):
+        idx = NUM_CYCLE - i
+        start, end = INDEX[i], INDEX[i+1]
+        mask = PROFIT[start:end] < 1.0
+        temp_nguong = max(WEIGHT[start:end][mask])
+        temp_nguong = max(temp_nguong, Nguong_snp[idx-1])
+        Nguong_snp[idx] = temp_nguong
+
+    GeoNgn_snp = np.zeros(NUM_CYCLE)
+    HarNgn_snp = np.zeros(NUM_CYCLE)
+    ProNgn_snp = np.zeros(NUM_CYCLE)
+    for i in range(NUM_CYCLE):
+        idx = NUM_CYCLE - 1 - i
+        v = Nguong_snp[idx]
+        temp_profit = np.zeros(size-i)
+        bool_wgt = WEIGHT > v
+        for k in range(size-1, i-1, -1):
+            _idx_ = size - 1 - k
+            start, end = INDEX[k], INDEX[k+1]
+            mask_ = bool_wgt[start:end]
+            if np.count_nonzero(mask_) == 0:
+                temp_profit[_idx_] = INTEREST
+            else:
+                temp_profit[_idx_] = PROFIT[start:end][mask_].mean()
+
+        GeoNgn_snp[idx] = geomean(temp_profit[:-1])
+        HarNgn_snp[idx] = harmean(temp_profit[:-1])
+        ProNgn_snp[idx] = temp_profit[-1]
+
+    results = []
+    for i in range(NUM_CYCLE):
+        result = [
+            Nguong_snp[i],
+            GeoNgn_snp[i],
+            HarNgn_snp[i],
+            ProNgn_snp[i]
+        ]
+        results.append(result)
+
+    return results

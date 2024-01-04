@@ -194,7 +194,7 @@ class BruteforceBase(Base):
                     data = pd.DataFrame(self.list_data[i])
                     data.columns = list_data_cols
                     data.insert(loc=0, column="id", value=np.arange(self.start_id, self.start_id+self.count[0]))
-                    for key, val in self.filter.items():
+                    for key, val in self.filters.items():
                         data = operator_mapping[val[0]](data, key, val[1])
 
                     self.target_count += len(data)
