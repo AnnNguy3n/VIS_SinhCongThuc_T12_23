@@ -1,5 +1,6 @@
 import numpy as np
 from pandas import DataFrame
+import numba as nb
 
 
 class Base:
@@ -99,3 +100,56 @@ def convert_strF_to_arrF(strF):
             idx += 1
 
     return arrF
+
+
+def similarity_filter(df_CT, fml_col,n=100):
+    list_CT = []
+    for ct in df_CT[fml_col]:
+        list_CT.append(convert_strF_to_arrF(ct))
+
+    list_index = _similarity_filter(list_CT, n)
+    return df_CT.iloc[list_index].reset_index(drop=True)
+
+
+@nb.njit
+def check_similar_2(f1_, f2_):
+    f1 = np.unique(f1_[1::2])
+    f2 = np.unique(f2_[1::2])
+
+    if len(f1) > len(f2):
+        F1 = f1
+        F2 = f2
+    else:
+        F1 = f2
+        F2 = f1
+
+    count = 0
+    for i in F1:
+        if i not in F2:
+            count += 1
+
+    if count >= 2:
+        return False
+
+    return True
+
+
+@nb.njit
+def _similarity_filter(list_ct, num_CT):
+    list_index = [0]
+    count = 1
+    for i in range(1, len(list_ct)):
+        check = True
+        for j in list_index:
+            if check_similar_2(list_ct[i], list_ct[j]):
+                check = False
+                break
+
+        if check:
+            list_index.append(i)
+            count += 1
+            if count == num_CT:
+                print(i)
+                break
+
+    return list_index
