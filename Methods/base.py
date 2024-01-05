@@ -102,17 +102,17 @@ def convert_strF_to_arrF(strF):
     return arrF
 
 
-def similarity_filter(df_CT, fml_col,n=100):
+def similarity_filter(df_CT, fml_col, n=100, level=2):
     list_CT = []
     for ct in df_CT[fml_col]:
         list_CT.append(convert_strF_to_arrF(ct))
 
-    list_index = _similarity_filter(list_CT, n)
+    list_index = _similarity_filter(list_CT, n, level)
     return df_CT.iloc[list_index].reset_index(drop=True)
 
 
 @nb.njit
-def check_similar_2(f1_, f2_):
+def check_similar_2(f1_, f2_, level):
     f1 = np.unique(f1_[1::2])
     f2 = np.unique(f2_[1::2])
 
@@ -128,20 +128,20 @@ def check_similar_2(f1_, f2_):
         if i not in F2:
             count += 1
 
-    if count >= 2:
+    if count >= level:
         return False
 
     return True
 
 
 @nb.njit
-def _similarity_filter(list_ct, num_CT):
+def _similarity_filter(list_ct, num_CT, level):
     list_index = [0]
     count = 1
     for i in range(1, len(list_ct)):
         check = True
         for j in list_index:
-            if check_similar_2(list_ct[i], list_ct[j]):
+            if check_similar_2(list_ct[i], list_ct[j], level):
                 check = False
                 break
 
