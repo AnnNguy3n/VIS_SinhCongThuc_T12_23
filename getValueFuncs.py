@@ -14,6 +14,27 @@ def harmean(arr):
 
 
 @nb.njit
+def sinhF_GeoPro(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTEREST, NUM_CYCLE):
+    """
+    Output: GeoPro
+    """
+    size = INDEX.shape[0] - 1
+    arr_profit = np.zeros(size)
+    for i in range(size-1, -1, -1):
+        idx = size - 1 - i
+        start, end = INDEX[i], INDEX[i+1]
+        wgt_ = WEIGHT[start:end]
+        arr_max = np.where(wgt_==max(wgt_))[0]
+        if arr_max.shape[0] == 1:
+            arr_profit[idx] = PROFIT[start:end][arr_max[0]]
+        else:
+            arr_profit[idx] = INTEREST
+
+    GeoPro = geomean(arr_profit[:-1])
+    return np.round(GeoPro, 4)
+
+
+@nb.njit
 def single_investment(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTEREST, NUM_CYCLE):
     """
     Output: GeoPro, HarPro, Value, Profit, ValGLim, GeoLim, ValHLim, HarLim, GeoRank, HarRank

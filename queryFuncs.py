@@ -32,3 +32,13 @@ def insert_rows(table_name, list_of_list_value):
     text = "".join(temp_list)
 
     return f'''INSERT INTO "{table_name}" VALUES {text[:-1]};'''
+
+
+def create_table_sinhF(len_formula, list_field, cycle):
+    list_formula_col = [f'"E{i}" INTEGER NOT NULL,' for i in range(len_formula)]
+    list_field_col = [f'"{field[0]}" {field[1]},' for field in list_field]
+    temp = "\n    "
+    return f'''CREATE TABLE "{cycle}_{len_formula}" (
+    {temp.join(list_formula_col)}
+    {temp.join(list_field_col)[:-1]}
+)'''
