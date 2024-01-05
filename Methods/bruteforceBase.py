@@ -227,7 +227,7 @@ class BruteforceBase(Base):
                     else:
                         if len(self.temp_df_save) > 0:
                             pd.concat(self.temp_df_save).to_csv(
-                                self.main_folder + f"/result_{self.save_count}.csv"
+                                self.main_folder + f"/result_{self.save_count}.csv", index=False
                             )
                             self.save_count += 1
                             self.temp_df_save.clear()

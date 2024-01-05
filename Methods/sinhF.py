@@ -176,7 +176,7 @@ class SinhF(Base):
 
                     data = pd.DataFrame(temp_data)
                     data.columns = list_col
-                    data.to_csv(self.main_folder + f"/Gen_{k+1}/result_{self.start_time}.csv")
+                    data.to_csv(self.main_folder + f"/Gen_{k+1}/result_{self.start_time}.csv", index=False)
 
                 self.list_data[k].clear()
 
