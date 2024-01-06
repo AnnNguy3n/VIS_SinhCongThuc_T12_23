@@ -159,7 +159,11 @@ def multi_investment(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTEREST, NUM_C
         wgt_[::-1].sort()
         arr_loop[n_val_per_cyc*idx:n_val_per_cyc*(idx+1)] = wgt_[:n_val_per_cyc]
 
-    temp_arr_loop = np.unique(arr_loop[:n_val_per_cyc*(-NUM_CYCLE+1)])
+    if NUM_CYCLE == 1:
+        temp_arr_loop = np.unique(arr_loop)
+    else:
+        temp_arr_loop = np.unique(arr_loop[:n_val_per_cyc*(-NUM_CYCLE+1)])
+
     Nguong = np.zeros(NUM_CYCLE)
     GeoNgn = np.zeros(NUM_CYCLE)
     HarNgn = np.zeros(NUM_CYCLE)
@@ -265,7 +269,11 @@ def multi_investment_strictly(WEIGHT, INDEX, PROFIT, PROFIT_RANK, SYMBOL, INTERE
         wgt_[::-1].sort()
         arr_loop[n_val_per_cyc*idx:n_val_per_cyc*(idx+1)] = wgt_[:n_val_per_cyc]
 
-    temp_arr_loop = np.unique(arr_loop[:n_val_per_cyc*(-NUM_CYCLE+1)])
+    if NUM_CYCLE == 1:
+        temp_arr_loop = np.unique(arr_loop)
+    else:
+        temp_arr_loop = np.unique(arr_loop[:n_val_per_cyc*(-NUM_CYCLE+1)])
+
     Nguong2 = np.zeros(NUM_CYCLE)
     GeoNgn2 = np.zeros(NUM_CYCLE)
     HarNgn2 = np.zeros(NUM_CYCLE)
