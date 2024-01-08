@@ -92,7 +92,8 @@ class BruteforceBase(Base):
                  DIV_WGT_BY_MC,
                  TARGET,
                  TMP_STRG_SIZE,
-                 PERIODIC_SAVE_TIME):
+                 PERIODIC_SAVE_TIME,
+                 MAX_OPERAND_PER_FORMULA=0):
         data, connection, list_gvf, list_field, main_folder, MARKET_CAP = set_up(
             DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, MAX_CYCLE, MIN_CYCLE, METHOD, FIELDS, MODE, DIV_WGT_BY_MC
         )
@@ -117,6 +118,7 @@ class BruteforceBase(Base):
         self.max_cycle = MAX_CYCLE
         self.time = time.time()
         self.start_time = self.time
+        self.max_operand_per_formula = MAX_OPERAND_PER_FORMULA
         if self.save_type == 0:
             self.cursor = connection.cursor()
 

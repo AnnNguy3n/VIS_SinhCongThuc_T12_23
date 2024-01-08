@@ -22,9 +22,10 @@ class Generator(BruteforceBase):
                  MODE=0,
                  TMP_STRG_SIZE=10000,
                  PERIODIC_SAVE_TIME=1800,
+                 MAX_OPERAND_PER_FORMULA=0,
                  numerator_condition=True):
         METHOD = 0
-        super().__init__(DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, METHOD, FIELDS, MODE, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, TMP_STRG_SIZE, PERIODIC_SAVE_TIME)
+        super().__init__(DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, METHOD, FIELDS, MODE, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, TMP_STRG_SIZE, PERIODIC_SAVE_TIME, MAX_OPERAND_PER_FORMULA)
         self.numerator_condition = numerator_condition
 
     def generate(self):
@@ -120,6 +121,9 @@ class Generator(BruteforceBase):
             self.save_history(flag=0)
 
             num_operand += 1
+            if num_operand == self.max_operand_per_formula + 1:
+                return
+
             self.current_formula_length = num_operand
             self.start_id = 0
             self.check_and_create_table(num_operand)
