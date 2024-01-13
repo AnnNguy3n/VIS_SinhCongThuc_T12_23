@@ -27,7 +27,7 @@ class Generator(BruteforceBase):
         METHOD = 1
         super().__init__(DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, METHOD, FIELDS, MODE, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, TMP_STRG_SIZE, PERIODIC_SAVE_TIME, MAX_OPERAND_PER_FORMULA)
 
-    def generate(self):
+    def generate(self, list_required_operand=[]):
         # Checkpoint
         try:
             self.checkpoint = list(np.load(
@@ -37,7 +37,7 @@ class Generator(BruteforceBase):
             self.checkpoint[0][-1] += 1
         except:
             self.checkpoint = [
-                np.zeros(2, int), 0, 0
+                np.zeros(2*max(len(list_required_operand), 1), int), 0, 0
             ]
 
         self.start_id = self.checkpoint[-1]
@@ -51,6 +51,7 @@ class Generator(BruteforceBase):
         self.current = copy.deepcopy(self.checkpoint)
         self.count = np.array([0, self.storage_size, 0, 1000000000])
         last_operand = num_operand
+        list_required_operand = np.array(list_required_operand, int)
 
         while True:
             list_uoc_so = [i for i in range(1, num_operand+1) if num_operand % i == 0]
@@ -65,7 +66,12 @@ class Generator(BruteforceBase):
                     self.current[0] = formula.copy()
                     self.current[1] = i
 
-                self.__fill_gm1__(formula, struct, 0, np.zeros(self.OPERAND.shape[1]), 0, np.zeros(self.OPERAND.shape[1]), 0, False, False)
+                if list_required_operand.shape[0] == formula.shape[0] // 2:
+                    sub_mode = True
+                else:
+                    sub_mode = False
+                
+                self.__fill_gm1__(formula, struct, 0, np.zeros(self.OPERAND.shape[1]), 0, np.zeros(self.OPERAND.shape[1]), 0, False, False, sub_mode, list_required_operand)
 
             self.save_history(flag=0)
 
@@ -77,7 +83,7 @@ class Generator(BruteforceBase):
             self.start_id = 0
             self.check_and_create_table(num_operand)
 
-    def __fill_gm1__(self, formula, struct, idx, temp_0, temp_op, temp_1, mode, add_sub_done, mul_div_done):
+    def __fill_gm1__(self, formula, struct, idx, temp_0, temp_op, temp_1, mode, add_sub_done, mul_div_done, sub_mode, list_op):
         if mode == 0: # Sinh dấu cộng trừ đầu mỗi cụm
             gr_idx = list(struct[:,2]-1).index(idx)
 
@@ -97,7 +103,7 @@ class Generator(BruteforceBase):
                 else:
                     new_add_sub_done = False
 
-                self.__fill_gm1__(new_formula, new_struct, idx+1, temp_0, temp_op, temp_1, 1, new_add_sub_done, mul_div_done)
+                self.__fill_gm1__(new_formula, new_struct, idx+1, temp_0, temp_op, temp_1, 1, new_add_sub_done, mul_div_done, sub_mode, list_op)
         elif mode == 2:
             start = 2
             if (formula[0:idx] == self.current[0][0:idx]).all():
@@ -128,13 +134,16 @@ class Generator(BruteforceBase):
                             for j in range(new_struct[0,1]-1):
                                 new_formula[new_struct[i,2] + 2*j + 1] = new_formula[2+2*j]
 
-                self.__fill_gm1__(new_formula, new_struct, idx+1, temp_0, temp_op, temp_1, 1, add_sub_done, new_mul_div_done)
+                self.__fill_gm1__(new_formula, new_struct, idx+1, temp_0, temp_op, temp_1, 1, add_sub_done, new_mul_div_done, sub_mode, list_op)
         elif mode == 1:
             start = 0
             if (formula[0:idx] == self.current[0][0:idx]).all():
                 start = self.current[0][idx]
 
             valid_operand = get_valid_operand(formula, struct, idx, start, self.OPERAND.shape[0])
+            if sub_mode:
+                valid_operand = np.intersect1d(valid_operand, list_op)
+
             if valid_operand.shape[0] > 0:
                 if formula[idx-1] < 2:
                     temp_op_new = formula[idx-1]
@@ -173,7 +182,17 @@ class Generator(BruteforceBase):
                             new_mode = 2
 
                     for i in range(valid_operand.shape[0]):
-                        self.__fill_gm1__(temp_list_formula[i], struct, new_idx, temp_0_new[i], temp_op_new, temp_1_new[i], new_mode, add_sub_done, mul_div_done)
+                        if valid_operand[i] in list_op:
+                            new_list_op = list_op[list_op != valid_operand[i]]
+                            new_sub_mode = sub_mode
+                        else:
+                            new_list_op = list_op.copy()
+                            if idx + 1 + 2*list_op.shape[0] == formula.shape[0]:
+                                new_sub_mode = True
+                            else:
+                                new_sub_mode = sub_mode
+
+                        self.__fill_gm1__(temp_list_formula[i], struct, new_idx, temp_0_new[i], temp_op_new, temp_1_new[i], new_mode, add_sub_done, mul_div_done, new_sub_mode, new_list_op)
                 else:
                     temp_0_new[np.isnan(temp_0_new)] = -1.7976931348623157e+308
                     temp_0_new[np.isinf(temp_0_new)] = -1.7976931348623157e+308

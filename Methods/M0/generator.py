@@ -28,7 +28,7 @@ class Generator(BruteforceBase):
         super().__init__(DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, METHOD, FIELDS, MODE, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, TMP_STRG_SIZE, PERIODIC_SAVE_TIME, MAX_OPERAND_PER_FORMULA)
         self.numerator_condition = numerator_condition
 
-    def generate(self):
+    def generate(self, list_required_operand=[]):
         # Checkpoint
         try:
             self.checkpoint = list(np.load(
@@ -39,7 +39,7 @@ class Generator(BruteforceBase):
         except:
             self.checkpoint = [
                 np.array([
-                    1, # Do dai cong thuc
+                    max(len(list_required_operand), 1), # Do dai cong thuc
                     0, # So toan hang trong cac cum tru
                     0, # Index cua cau truc cum cong
                     0, # Index cua cau truc cum tru,
@@ -59,6 +59,7 @@ class Generator(BruteforceBase):
         # Generate
         self.current = copy.deepcopy(self.checkpoint)
         self.count = np.array([0, self.storage_size, 0, 1000000000])
+        list_required_operand = np.array(list_required_operand, int)
 
         while True:
             self.current[0][0] = num_operand
@@ -113,8 +114,12 @@ class Generator(BruteforceBase):
                             else: formula = create_formula(struct)
 
                             self.current[2] = formula.copy()
+                            if list_required_operand.shape[0] == formula.shape[0] // 2:
+                                sub_mode = True
+                            else:
+                                sub_mode = False
 
-                            self.__fill_gm0__(formula, struct, 1, np.zeros(self.OPERAND.shape[1]), -1, np.zeros(self.OPERAND.shape[1]))
+                            self.__fill_gm0__(formula, struct, 1, np.zeros(self.OPERAND.shape[1]), -1, np.zeros(self.OPERAND.shape[1]), sub_mode, list_required_operand)
                             if not update_struct(struct, self.numerator_condition):
                                 break
 
@@ -128,12 +133,15 @@ class Generator(BruteforceBase):
             self.start_id = 0
             self.check_and_create_table(num_operand)
 
-    def __fill_gm0__(self, formula, struct, idx, temp_0, temp_op, temp_1):
+    def __fill_gm0__(self, formula, struct, idx, temp_0, temp_op, temp_1, sub_mode, list_op):
         start = 0
         if (formula[0:idx] == self.current[2][0:idx]).all():
             start = self.current[2][idx]
 
         valid_operand = get_valid_operand(formula, struct, idx, start, self.OPERAND.shape[0])
+        if sub_mode:
+            valid_operand = np.intersect1d(valid_operand, list_op)
+
         if valid_operand.shape[0] > 0:
             if formula[idx-1] < 2:
                 temp_op_new = formula[idx-1]
@@ -158,7 +166,17 @@ class Generator(BruteforceBase):
                 temp_list_formula[:,idx] = valid_operand
                 idx_new = idx + 2
                 for i in range(valid_operand.shape[0]):
-                    self.__fill_gm0__(temp_list_formula[i], struct, idx_new, temp_0_new[i], temp_op_new, temp_1_new[i])
+                    if valid_operand[i] in list_op:
+                        new_list_op = list_op[list_op != valid_operand[i]]
+                        new_sub_mode = sub_mode
+                    else:
+                        new_list_op = list_op
+                        if idx + 1 + 2*list_op.shape[0] == formula.shape[0]:
+                            new_sub_mode = True
+                        else:
+                            new_sub_mode = sub_mode
+
+                    self.__fill_gm0__(temp_list_formula[i], struct, idx_new, temp_0_new[i], temp_op_new, temp_1_new[i], new_sub_mode, new_list_op)
             else:
                 temp_0_new[np.isnan(temp_0_new)] = -1.7976931348623157e+308
                 temp_0_new[np.isinf(temp_0_new)] = -1.7976931348623157e+308

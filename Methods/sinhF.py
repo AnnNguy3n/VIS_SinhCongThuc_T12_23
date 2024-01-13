@@ -5,7 +5,7 @@ import queryFuncs as qf
 import time
 import pandas as pd
 import os
-from Methods.bruteforceBase import set_up
+# from Methods.bruteforceBase import set_up
 
 
 @nb.njit
