@@ -3,6 +3,8 @@ import numpy as np
 import copy
 from Methods.M0.helpFuncs import get_valid_operand
 from Methods.M1.helpFuncs import get_valid_op
+import os
+import sqlite3
 
 
 class Generator(BruteforceBase):
@@ -70,14 +72,17 @@ class Generator(BruteforceBase):
                     sub_mode = True
                 else:
                     sub_mode = False
-                
+
                 self.__fill_gm1__(formula, struct, 0, np.zeros(self.OPERAND.shape[1]), 0, np.zeros(self.OPERAND.shape[1]), 0, False, False, sub_mode, list_required_operand)
 
-            self.save_history(flag=0)
+            # self.save_history(flag=0)
 
             num_operand += 1
             if num_operand == self.max_operand_per_formula + 1:
+                self.save_history(flag=1)
                 return
+            else:
+                self.save_history(flag=0)
 
             self.current_formula_length = num_operand
             self.start_id = 0
@@ -209,3 +214,28 @@ class Generator(BruteforceBase):
 
     def change_checkpoint(self):
         self.current[-1] = self.start_id - 1
+
+
+class Tang_dan_so_luong_cot(Generator):
+    def __init__(self, DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, FIELDS, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, MODE=0, TMP_STRG_SIZE=10000, PERIODIC_SAVE_TIME=1800, MAX_OPERAND_PER_FORMULA=0):
+        super().__init__(DATABASE_PATH, SAVE_TYPE, DATA_OR_PATH, LABEL, INTEREST, NUM_CYCLE, MAX_CYCLE, MIN_CYCLE, FIELDS, NUM_CHILD_PROCESS, FILTERS, DIV_WGT_BY_MC, TARGET, MODE, TMP_STRG_SIZE, PERIODIC_SAVE_TIME, MAX_OPERAND_PER_FORMULA)
+
+    def generate(self, max_number_column):
+        main_folder = self.main_folder
+        OPERAND = self.OPERAND.copy()
+        for i in range(2, max_number_column+1):
+            self.OPERAND = OPERAND[:i, :]
+            new_folder = main_folder + f"/{i}"
+            os.makedirs(new_folder, exist_ok=True)
+            self.main_folder = new_folder
+            self.num_data_operand = i
+            if self.save_type == 0:
+                self.connection = sqlite3.Connection(self.main_folder + "/f.db")
+                self.cursor = self.connection.cursor()
+
+            if i == 2:
+                list_required_operand = []
+            else:
+                list_required_operand = [i-1]
+
+            super().generate(list_required_operand)
